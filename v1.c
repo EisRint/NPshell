@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <signal.h>
 
 struct node {
 	char data[512];
@@ -18,44 +20,54 @@ void showqueue();
 Node *front, *rear;
 
 int main(void) {
-	int select;
-	char input[512];
+
+	//	char PATH[][];
 
 	createq();
-
 
 	//-----------------------------------------------------------
 	while(1){
 		int i=0;
-		int k=0;
 		int flag=0;
-		char data[512];
+
+		char input[512];
+
+		int pipefd0[2];
+
+		printf("%% ");
 		while(flag==0){
-			data[i]=fgetc(stdin);
-			if (data[i]==' '){
-				//printf("%c is space\n",data[i]);
-				input[i] = '\0';
-				i=0;
-				addq(input);
+			input[i]=fgetc(stdin);
+
+
+			if (input[i]==' ' && i!=0 && input[i-1]!=' '){
+//				printf("%c is space\n",input[i]);
+				i++;
 			}
-			else if (data[i]=='\n'){
-				//printf("endl\n");
+			else if (input[i]=='\n'){
+//				printf("endl\n");
 				input[i] = '\0';
 				flag=1;
 				addq(input);
 			}
-			else{
-				//printf("%c is char\n",data[i]);
-				input[i]=data[i];
+			else if (input[i]=='|'){
+				input[i] = '\0';
+				addq(input);
+				i=0;
+			}
+			else if (input[i]!=' '){
 				i++;
 			}
+
 		}
 
-		showqueue();
-
 		//-----------------------------------------------------------
+showqueue();
 
 	}
+
+
+
+
 
 	return 0;
 }
