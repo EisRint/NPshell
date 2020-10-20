@@ -4,35 +4,21 @@
 #include <unistd.h>
 #include <signal.h>
 
-struct node {
-	char data[512];
-	struct node *next;
-};
-
-typedef struct node Node;
-
-void createq();
-void showfront();
-void addq(char *);
-void delq();
-void showqueue();
-
-Node *front, *rear;
 
 int main(void) {
 
 	//	char PATH[][];
 
-	createq();
 
 	//-----------------------------------------------------------
 	while(1){
 		int i=0;
+		int k=0;
 		int flag=0;
 
 		char input[512];
-
-		int pipefd0[2];
+		
+		char Q[7500][512];
 
 		printf("%% ");
 		while(flag==0){
@@ -40,18 +26,18 @@ int main(void) {
 
 
 			if (input[i]==' ' && i!=0 && input[i-1]!=' '){
-//				printf("%c is space\n",input[i]);
 				i++;
 			}
 			else if (input[i]=='\n'){
-//				printf("endl\n");
 				input[i] = '\0';
 				flag=1;
-				addq(input);
+				strcpy(Q[k],input);
+				k++;
 			}
 			else if (input[i]=='|'){
 				input[i] = '\0';
-				addq(input);
+				strcpy(Q[k],input);
+				k++;
 				i=0;
 			}
 			else if (input[i]!=' '){
@@ -61,65 +47,68 @@ int main(void) {
 		}
 
 		//-----------------------------------------------------------
-showqueue();
+	int is_empty=0;
+	int l=0;
+	int pipefd0[2];
+	int pipefd1[2];
+
+	while(is_empty==0){		
+		int len;
+		char buffer[1024]={0};
+
+		if(pipe(pipefd0)<0)
+			printf("pipe1 create error");
+		signal(SIGCHLD,SIG_IGN);
+		if(fork() == 0){ /*child process*/
+			close(pipefd0[0]);
+			dup2(pipefd0[1], STDOUT_FILENO); /*pipefd0 will close after STDIN receive EOF*/
+
+			char *argv[50];
+			int argvi = 0;
+			int it = 0;
+			_Bool f = 1;
+			while(Q[l][it] != '\0') {
+				if(Q[l][it] != ' ') {
+					if (f){
+						argv[argvi] = &Q[l][it];
+						++argvi;
+						++it;
+						f = 0;
+					} else {
+						++it;
+					}
+				} else {
+					Q[l][it] = '\0';
+					++it;
+					f = 1;
+				}
+			}
+			argv[argvi] = NULL;
+
+
+			execvp(argv[0],argv);
+			exit(0);
+		}else{ /*parent process*/
+			close(pipefd0[1]);
+			while((len=read(pipefd0[0],buffer,1023))>0){
+				buffer[len]='\0';
+				printf("%s\n",buffer);
+			}
+		}
+
+
+		l++;
+		if(l==k){
+			is_empty=1;
+		}
+
 
 	}
-
+	}
 
 
 
 
 	return 0;
-}
-
-void createq() {
-	front = rear = (Node*) malloc(sizeof(Node));
-	front->next = rear->next = NULL;
-}
-
-void showfront(){
-	if(front->next == NULL)
-		printf("\n佇列為空！");
-	else
-		printf("\n頂端值：%s", front->next->data);
-}
-
-void addq(char *data) {
-	Node *newnode;
-
-	newnode = (Node*) malloc(sizeof(Node));
-
-	if(front->next == NULL)
-		front->next = newnode;
-
-	strcpy(newnode->data,data);
-	newnode->next = NULL;
-	rear->next = newnode;
-	rear = newnode;
-}
-
-void delq() {
-	Node* tmpnode;
-
-	if(front->next == NULL) {
-		printf("\n佇列已空！");
-		return;
-	}
-
-	tmpnode = front->next;
-	front->next = tmpnode->next;
-	free(tmpnode);
-}
-
-void showqueue() {
-	Node* tmpnode;
-
-	tmpnode = front->next;
-
-	printf("\n佇列內容：\n");
-	while(tmpnode != NULL) {
-		printf("%s\n", tmpnode->data);
-		tmpnode = tmpnode->next;
-	}
 }
 
