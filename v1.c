@@ -1,14 +1,25 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 
+//extern int execvpe(const char *file, char *const argv[], char *const envp[]);
 
 int main(void) {
 
-	//	char PATH[][];
+	char *env;
+	env = getcwd(NULL, 0);
+	env = realloc(env, strlen(env) * 2 + 7);
+	sprintf(env + strlen(env) + 1, "/bin:%s", env);
+	memmove(env + strlen(env), env + strlen(env) + 1, strlen(env) + 6);
 
+
+	char *lang;
+	lang = malloc(12);
+	strcpy(lang,"en_US.UTF-8\0");
 
 	//-----------------------------------------------------------
 	while(1){
@@ -56,6 +67,38 @@ int main(void) {
 		if(strcmp(Q[0],"exit")==0){
 			exit(0);
 		}
+		
+		if(Q[0][0]=='p' && Q[0][1]=='r' && Q[0][2]=='i' && Q[0][3]=='n' && Q[0][4]=='t' && Q[0][5]=='e' && Q[0][6]=='n' && Q[0][7]=='v'){
+			if(Q[0][9]=='P' && Q[0][10]=='A' && Q[0][11]=='T' && Q[0][12]=='H'){
+				printf("%s\n",env);	
+				continue;
+			}
+			if(Q[0][9]=='L' && Q[0][10]=='A' && Q[0][11]=='N' && Q[0][12]=='G'){
+				printf("%s\n",lang);	
+				continue;
+			}
+			else{
+				continue;
+			}
+			
+		}
+
+		if(Q[0][0]=='s' && Q[0][1]=='e' && Q[0][2]=='t' && Q[0][3]=='e' && Q[0][4]=='n' && Q[0][5]=='v'){
+			if(Q[0][7]=='P' && Q[0][8]=='A' && Q[0][9]=='T' && Q[0][10]=='H'){
+				env = realloc(env, strlen(&Q[0][12]));
+				strcpy(env, &Q[0][12]);
+				continue;
+			}
+			if(Q[0][7]=='L' && Q[0][8]=='A' && Q[0][9]=='N' && Q[0][10]=='G'){
+				lang = realloc(lang, strlen(&Q[0][12]));
+				strcpy(lang, &Q[0][12]);
+				continue;
+			}
+			else{
+				continue;
+			}
+			
+		}
 
 		int is_empty=0;
 		int l=0;
@@ -99,8 +142,26 @@ int main(void) {
 				}
 				argv[argvi] = NULL;
 
+				char  pathenv[strlen(env) + sizeof("PATH=")];
+				sprintf(pathenv, "PATH=%s", env);
+				char *envp[] = {pathenv, NULL};
+//				puts("argv:");
+//				for(int fori = 0; argv[fori] != NULL; ++fori) {
+//				    printf("%s, ", argv[fori]);
+//				}
+//				puts("");
+//				puts("envp:");
+//                                for(int fori = 0; envp[fori] != NULL; ++fori) {
+//				    printf("%s, ", envp[fori]);
+//				}
+//				puts("");
+				setenv("PATH",env,1);
 
-				execvp(argv[0],argv);
+				printf("%d\n",execvp(argv[0],argv));
+				int errsv = errno;
+				printf("errno = %d\n",errsv);
+
+
 				exit(0);
 			}else{ /*parent process*/
 				close(pipefd1[1]);
