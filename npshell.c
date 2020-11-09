@@ -9,10 +9,12 @@
 int main(void) {
 
 	char *env;
-	env = getcwd(NULL, 0);
-	env = realloc(env, strlen(env) * 2 + 7);
-	sprintf(env + strlen(env) + 1, "/bin:%s", env);
-	memmove(env + strlen(env), env + strlen(env) + 1, strlen(env) + 6);
+	env = malloc(6);
+	strcpy(env,"bin:.\0");
+//	env = getcwd(NULL, 0);
+//	env = realloc(env, strlen(env) * 2 + 7);
+//	sprintf(env + strlen(env) + 1, "/bin:%s", env);
+//	memmove(env + strlen(env), env + strlen(env) + 1, strlen(env) + 6);
 
 
 	char *lang;
